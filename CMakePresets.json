@@ -1,0 +1,24 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "min",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_C_COMPILER": "/usr/bin/gcc",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+        "CUTLASS_ENABLE_HEADERS_ONLY": true,
+        "CUTLASS_ENABLE_TOOLS": true,
+        "CUTLASS_ENABLE_LIBRARY": false,
+        "CUTLASS_ENABLE_PROFILER": false,
+        "CUTLASS_ENABLE_TESTS": false,
+        "CUTLASS_ENABLE_EXAMPLES": true,
+        "CUTLASS_NVCC_ARCHS": "90"
+      }
+    }
+  ]
+}
