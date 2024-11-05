@@ -1,4 +1,5 @@
 {
   // use `C_Cpp` for cuda IntelliSense
   "C_Cpp.intelliSenseEngine": "default",
+  "C_Cpp.intelliSenseCachePath": "${workspaceFolder}/.cache"
 }
