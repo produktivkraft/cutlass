@@ -1,5 +1,8 @@
 {
   // use `C_Cpp` for cuda IntelliSense
   "C_Cpp.intelliSenseEngine": "default",
-  "C_Cpp.intelliSenseCachePath": "${workspaceFolder}/.cache"
+  // `clangd` also use `.cache` as default path
+  "C_Cpp.intelliSenseCachePath": "${workspaceFolder}/.cache",
+  // ipch s are too big
+  "C_Cpp.intelliSenseCacheSize": 0
 }
