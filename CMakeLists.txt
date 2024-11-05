@@ -737,6 +737,7 @@ if(NOT WIN32)
   # Add common library search paths so executables and libraries can load and run
   # without LD_LIBRARY_PATH being set.
   link_libraries(
+    # disable when using `CUDA_COMPILER=clang`
     "-Wl,-rpath,'$ORIGIN'"
     "-Wl,-rpath,'$ORIGIN/../lib64'"
     "-Wl,-rpath,'$ORIGIN/../lib'"

@@ -11,6 +11,7 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
         "CMAKE_C_COMPILER": "/usr/bin/gcc",
         "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/bin",
         "CUTLASS_ENABLE_HEADERS_ONLY": true,
         "CUTLASS_ENABLE_TOOLS": true,
         "CUTLASS_ENABLE_LIBRARY": false,
@@ -18,6 +19,18 @@
         "CUTLASS_ENABLE_TESTS": false,
         "CUTLASS_ENABLE_EXAMPLES": true,
         "CUTLASS_NVCC_ARCHS": "90"
+      }
+    },
+    {
+      "name": "min_clang",
+      "description": "not work",
+      "binaryDir": "${sourceDir}/build_clang",
+      "inherits": "min",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/root/micromamba/envs/pyenv/bin/clang",
+        "CMAKE_CXX_COMPILER": "/root/micromamba/envs/pyenv/bin/clang++",
+        "CMAKE_LINKER_TYPE": "LLD",
+        "CUDA_COMPILER": "clang"
       }
     }
   ]
