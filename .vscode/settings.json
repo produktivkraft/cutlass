@@ -3,11 +3,12 @@
   "C_Cpp.intelliSenseCachePath": "${workspaceFolder}/.cache",
   //
   // use `C_Cpp` for cuda IntelliSense
-  "C_Cpp.intelliSenseEngine": "default",
+  // "C_Cpp.intelliSenseEngine": "default",
   // ipch s are too big
   "C_Cpp.intelliSenseCacheSize": 0,
   //
   // "C_Cpp.intelliSenseEngine": "Tag Parser",
-  // "C_Cpp.intelliSenseEngine": "disabled",
+  // for non-cuda src(cutlass self), use clangd
+  "C_Cpp.intelliSenseEngine": "disabled",
   //
 }

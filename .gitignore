@@ -6,3 +6,4 @@ build/
 build_*/
 .vscode/
 .cache/
+CMakeUserPresets.json
