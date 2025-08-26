@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ################################################################################
+from __future__ import annotations
 
 import ctypes
 from typing import Union
 
-from cuda import cuda, cudart
+from cutlass_cppgen.utils.lazy_import import lazy_import
+cuda = lazy_import("cuda.cuda")
+cudart =  lazy_import("cuda.cudart")
 import numpy as np
 
 from cutlass_library import (
@@ -44,14 +47,14 @@ from cutlass_library import (
     SubstituteTemplate
 )
 
-import cutlass
-from cutlass.backend.c_types import MatrixCoord_, TensorRef2D_, get_reduction_params
-from cutlass.backend.frontend import NumpyFrontend, TorchFrontend
-from cutlass.backend.library import TensorDescription
-from cutlass.backend.memory_manager import DevicePtrWrapper
-from cutlass.backend.operation import ExecutableOperation, LaunchConfiguration
-from cutlass.shape import MatrixCoord
-from cutlass.utils.datatypes import is_numpy_tensor, is_torch_tensor
+import cutlass_cppgen
+from cutlass_cppgen.backend.c_types import MatrixCoord_, TensorRef2D_, get_reduction_params
+from cutlass_cppgen.backend.frontend import NumpyFrontend, TorchFrontend
+from cutlass_cppgen.backend.library import TensorDescription
+from cutlass_cppgen.backend.memory_manager import DevicePtrWrapper
+from cutlass_cppgen.backend.operation import ExecutableOperation, LaunchConfiguration
+from cutlass_cppgen.shape import MatrixCoord
+from cutlass_cppgen.utils.datatypes import is_numpy_tensor, is_torch_tensor
 
 
 class ReductionOperation:
@@ -197,7 +200,7 @@ class ReductionArguments:
         Frees allocated device-side memory
         """
         # Free any device memory allocated manually
-        if not cutlass.use_rmm:
+        if not cutlass_cppgen.use_rmm:
             for attr in ["destination_buffer", "source_buffer"]:
                 if hasattr(self, attr):
                     buf = getattr(self, attr)

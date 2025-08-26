@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2024 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,6 @@
 #include "cute/algorithm/functional.hpp"
 #include "cute/atom/mma_atom.hpp"
 #include "cute/algorithm/gemm.hpp"
-#include "cute/tensor_predicate.hpp"
 #include "cute/numeric/arithmetic_tuple.hpp"
 #include "cutlass/arch/grid_dependency_control.h"
 
@@ -56,6 +55,19 @@ namespace cutlass::gemm::collective {
 using namespace cute;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace detail {
+
+constexpr int PrefetchStages = 4;
+constexpr int PrefetchInitialStages = 1;
+// This determines how much shmem we set aside for prefetch.
+// We don't reuse anything loaded by prefetcher, so we can keep
+// loading into the same place -- there will be a conflict when
+// writing, but it doesn't affect performance as much as the doors
+// that this opens.
+constexpr int PrefetchStagesActual = 1;
+
+} // namespace detail
 
 // WarpSpecialized Mainloop
 template <
@@ -117,15 +129,7 @@ struct CollectiveMma<
   static_assert(size<1>(ClusterShape{}) == 1, "Cluster shape N must be 1");
   using CtaShape_MNK = decltype(shape_div(TileShape{}, ClusterShape{}));
 
-  static constexpr int PrefetchStages = 4;
-  static constexpr int PrefetchInitialStages = 1;
-  // This determines how much shmem we set aside for prefetch.
-  // We don't reuse anything loaded by prefetcher, so we can keep
-  // loading into the same place -- there will be a conflict when
-  // writing, but it doesn't affect performance as much as the doors
-  // that this opens.
-  static constexpr int PrefetchStagesActual = 1;
-  using PrefetcherPipeline = cutlass::PrefetchPipeline<PrefetchStages>;
+  using PrefetcherPipeline = cutlass::PrefetchPipeline<detail::PrefetchStages>;
 
   using MainloopPipeline = cutlass::PipelineTmaAsync<DispatchPolicy::Stages>;
   using PipelineState = cutlass::PipelineState<DispatchPolicy::Stages>;
@@ -155,7 +159,7 @@ struct CollectiveMma<
   using PrefetchSmemLayoutA = decltype(make_layout(make_shape(
     cute::Int<size<0>(SmemLayoutA{})>{},
     cute::Int<size<1>(SmemLayoutA{})>{},
-    cute::Int<PrefetchStagesActual>{})));
+    cute::Int<detail::PrefetchStagesActual>{})));
 
   static constexpr auto prefetch_smem_size = cute::cosize_v<PrefetchSmemLayoutA>;
 
@@ -176,7 +180,7 @@ struct CollectiveMma<
   using InternalElementB = cute::conditional_t<ConvertF32toTF32B, tfloat32_t, uint_bit_t<sizeof_bits_v<ElementB>>>;
 
   // Defined outside the class where it's used, to work around MSVC issues
-  using PrefetcherPipelineStorage = ::cutlass::detail::PrefetcherPipelineSharedStorage<PrefetchStages>;
+  using PrefetcherPipelineStorage = ::cutlass::detail::PrefetcherPipelineSharedStorage<detail::PrefetchStages>;
 
   struct SharedStorage {
     struct TensorStorage : cute::aligned_struct<128, _0> {
@@ -283,7 +287,7 @@ struct CollectiveMma<
     constexpr int tma_alignment_bits = 128;
     auto problem_shape_MNKL = append<4>(problem_shape, 1);
     auto [M,N,K,L] = problem_shape_MNKL;
-    
+
     constexpr int min_tma_aligned_elements_A = tma_alignment_bits / cutlass::sizeof_bits<ElementA>::value;
     bool implementable = cutlass::detail::check_alignment<min_tma_aligned_elements_A>(cute::make_shape(M,K,L), StrideA{});
     constexpr int min_tma_aligned_elements_B = tma_alignment_bits / cutlass::sizeof_bits<ElementB>::value;
@@ -440,7 +444,7 @@ struct CollectiveMma<
         copy(mainloop_params.tma_load_b.with(*tma_barrier, mcast_mask_b, cute::TMA::CacheHintSm90::EVICT_LAST), tBgB(_,_,_,*k_tile_iter), tBsB(_,_,_,write_stage));
         ++k_tile_iter;
 
-        if (!disable_gdc && cnt >= launch_dep_grids_threshold && !launch_dep_grids) { 
+        if (!disable_gdc && cnt >= launch_dep_grids_threshold && !launch_dep_grids) {
           launch_dep_grids = true;
           cutlass::arch::launch_dependent_grids();
         }
@@ -448,7 +452,7 @@ struct CollectiveMma<
         // Advance smem_pipe_write
         ++smem_pipe_write;
       }
-      if (!disable_gdc && !launch_dep_grids) { 
+      if (!disable_gdc && !launch_dep_grids) {
         cutlass::arch::launch_dependent_grids();
       }
     }
@@ -528,7 +532,7 @@ struct CollectiveMma<
         copy(mainloop_params.tma_load_a.with(*tma_barrier, mcast_mask_a, cute::TMA::CacheHintSm90::EVICT_FIRST), tAgA(_,_,_,*k_tile_iter), tAsA(_,_,_,write_stage));
         ++k_tile_iter;
 
-        if (!disable_gdc && cnt >= launch_dep_grids_threshold && !launch_dep_grids) { 
+        if (!disable_gdc && cnt >= launch_dep_grids_threshold && !launch_dep_grids) {
           launch_dep_grids = true;
           cutlass::arch::launch_dependent_grids();
         }
@@ -536,7 +540,7 @@ struct CollectiveMma<
         // Advance smem_pipe_write
         ++smem_pipe_write;
       }
-      if (!disable_gdc && !launch_dep_grids) { 
+      if (!disable_gdc && !launch_dep_grids) {
         cutlass::arch::launch_dependent_grids();
       }
     }
@@ -629,9 +633,9 @@ struct CollectiveMma<
     // Issue the epilogue waits
     if (lane_predicate) {
       /* This helps avoid early exit of blocks in Cluster
-       * Waits for all stages to either be released (all 
+       * Waits for all stages to either be released (all
        * Consumer UNLOCKs), or if the stage was never used
-       * then would just be acquired since the phase was 
+       * then would just be acquired since the phase was
        * still inverted from make_producer_start_state
        */
       pipeline.producer_tail(smem_pipe_write);
@@ -660,7 +664,7 @@ struct CollectiveMma<
       bool do_best_effort_prefetch = mainloop_params.prefetch_ratio < 0;
       float prefetch_ratio = do_best_effort_prefetch ? 1.0 : mainloop_params.prefetch_ratio;
       int prefetch_iters = static_cast<int>(static_cast<float>(k_tile_count) * 0.5 * prefetch_ratio);
-      prefetch_iters = min(k_tile_count, ((prefetch_iters + PrefetchStages - 1) / PrefetchStages) * PrefetchStages);
+      prefetch_iters = min(k_tile_count, ((prefetch_iters + detail::PrefetchStages - 1) / detail::PrefetchStages) * detail::PrefetchStages);
 
       Tensor sA = make_tensor(
           make_smem_ptr(shared_tensors.smem_prefetch.data()), PrefetchSmemLayoutA{});             // (BLK_M,BLK_K,PIPE)
@@ -702,7 +706,7 @@ struct CollectiveMma<
           break;
         }
 
-        prefetcher_pipeline.prefetcher_acquire(prefetcher_stage, prefetcher_phase, cnt >= PrefetchStages);
+        prefetcher_pipeline.prefetcher_acquire(prefetcher_stage, prefetcher_phase, cnt >= detail::PrefetchStages);
         using BarrierType = typename PrefetcherPipeline::PrefetcherBarrierType;
         BarrierType* tma_barrier = prefetcher_pipeline.prefetcher_get_barrier(prefetcher_stage);
 
@@ -849,7 +853,7 @@ struct CollectiveMma<
     k_tile_count -= prologue_mma_count;
 
     smem_pipe_release.advance(k_tile_count);
-    
+
     // Wait on all GMMAs to complete
     warpgroup_wait<0>();
 

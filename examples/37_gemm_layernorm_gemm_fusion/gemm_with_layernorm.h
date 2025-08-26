@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,7 +87,7 @@ public:
   using ElementLayernormCompute = ElementLayernormCompute_;
   using ThreadblockShape = ThreadblockShape_;
 
-  // Pre-processing has ensured the layout equivelent to RowMajor
+  // Pre-processing has ensured the layout equivalent to RowMajor
   using Layout = cutlass::layout::RowMajor;
 
   using TensorVariance = TensorRef<ElementVariance, Layout>;

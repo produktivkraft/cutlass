@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,14 @@
 """
 Utility functions for interacting with the device
 """
+from __future__ import annotations
 
-from cuda import cuda, cudart
+from cutlass_cppgen.utils.lazy_import import lazy_import
+cuda = lazy_import("cuda.cuda")
+cudart =  lazy_import("cuda.cudart")
 
-import cutlass
-from cutlass.utils.datatypes import is_cupy_tensor, is_numpy_tensor, is_torch_tensor
+import cutlass_cppgen
+from cutlass_cppgen.utils.datatypes import is_cupy_tensor, is_numpy_tensor, is_torch_tensor
 
 
 def check_cuda_errors(result: list):
@@ -74,7 +77,7 @@ def device_cc(device: int = -1) -> int:
     :rtype: int
     """
     if device == -1:
-        device = cutlass.device_id()
+        device = cutlass_cppgen.device_id()
 
     deviceProp = check_cuda_errors(cudart.cudaGetDeviceProperties(device))
     major = str(deviceProp.major)
@@ -84,7 +87,7 @@ def device_cc(device: int = -1) -> int:
 
 def device_sm_count(device: int = -1):
     if device == -1:
-        device = cutlass.device_id()
+        device = cutlass_cppgen.device_id()
     err, device_sm_count = cuda.cuDeviceGetAttribute(
         cuda.CUdevice_attribute.CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, device
     )

@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -243,10 +243,11 @@ cudaError_t run_batched_gemm(bool use_array) {
   const char* gemm_desc = use_array ? "array" : "strided batched";
   std::cout << "Running " << gemm_desc << " gemm" << std::endl;
 
-  // Arbitrary problem size
+  // Arbitrary matrix shape
   int const m = 520;
   int const n = 219;
   int const k = 129;
+
   int const batch_count = 17;
 
   // A, B are non-transpose, column major

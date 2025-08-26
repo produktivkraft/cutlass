@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -203,7 +203,7 @@ requires any memory for scratch space.
 If yes, we reserve scratch space and pass it along
 with other arguments to initialize the CUTLASS kernel.
 
-After lauching the CUTLASS kernel, this example runs
+After launching the CUTLASS kernel, this example runs
 a reference convolution kernel (from CUTLASS utilities)
 to check correctness.
 */

@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,14 +35,13 @@
 */
 
 #pragma once
-
+#include "cutlass/cutlass.h"
 #if defined(__CUDACC_RTC__)
-#include <cuda/std/cstdint>
+#include CUDA_STD_HEADER(cstdint)
 #else
 #include <cstdint>
 #endif
 
-#include "cutlass/cutlass.h"
 #include "cutlass/numeric_size.h"
 #include "cutlass/platform/platform.h"
 
@@ -74,9 +73,15 @@ struct integer_subbyte {
   template<class T,
     class Enable = cutlass::platform::enable_if_t<cutlass::platform::is_convertible_v<T, int>>
   >
+#if !defined(CUTLASS_EXTRA_WARNINGS)
   [[deprecated("Implicit conversion is deprecated; please use explicit construction instead")]]
+#endif
   CUTLASS_HOST_DEVICE
   integer_subbyte(T value)
+      : integer_subbyte(static_cast<xint_t>(value)) {}
+
+  CUTLASS_HOST_DEVICE
+  integer_subbyte(float value)
       : integer_subbyte(static_cast<xint_t>(value)) {}
 
   // CUTLASS code commonly converts both signed and unsigned integers
@@ -93,7 +98,7 @@ struct integer_subbyte {
       [[maybe_unused]] constexpr int lower_bound = -(1 << (Bits - 1));
       [[maybe_unused]] constexpr int upper_bound = (1 << (Bits - 1)) - 1;
       assert(value >= lower_bound);
-      assert(value < upper_bound);
+      assert(value <= upper_bound);
     }
     else {
       [[maybe_unused]] constexpr unsigned upper_bound = 1u << Bits;
@@ -112,13 +117,17 @@ struct integer_subbyte {
       [[maybe_unused]] constexpr int lower_bound = -(1 << (Bits - 1));
       [[maybe_unused]] constexpr int upper_bound = (1 << (Bits - 1)) - 1;
       assert(value >= lower_bound);
-      assert(value < upper_bound);
+      assert(value <= upper_bound);
     }
     else {
       [[maybe_unused]] constexpr unsigned upper_bound = 1u << Bits;
       assert(value < upper_bound);
     }
   }
+
+  CUTLASS_HOST_DEVICE explicit
+  integer_subbyte(uint8_t value)
+    : integer_subbyte(static_cast<unsigned>(value)) {}
 
   // Convert to the "external" integer type (int or unsigned)
   CUTLASS_HOST_DEVICE
@@ -184,6 +193,9 @@ struct integer_subbyte {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// 1-bit binary type
+using bin1_t = bool;
+
 /// 1-bit Unsigned integer type
 using uint1b_t = integer_subbyte<1, false>;
 
@@ -193,14 +205,23 @@ using int2b_t = integer_subbyte<2, true>;
 /// 2-bit Unsigned integer type
 using uint2b_t = integer_subbyte<2, false>;
 
+/// 3-bit Integer type
+using int3b_t = integer_subbyte<3, true>;
+
+/// 3-bit Unsigned integer type
+using uint3b_t = integer_subbyte<3, false>;
+
 /// 4-bit Integer type
 using int4b_t = integer_subbyte<4, true>;
 
 /// 4-bit Unsigned integer type
 using uint4b_t = integer_subbyte<4, false>;
 
-/// 1-bit binary type
-using bin1_t = bool;
+/// 6-bit integer type
+using int6b_t = integer_subbyte<6, true>;
+
+/// 6-bit unsigned integer type
+using uint6b_t = integer_subbyte<6, false>;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 

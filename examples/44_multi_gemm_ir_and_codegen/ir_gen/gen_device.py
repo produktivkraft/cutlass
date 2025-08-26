@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -153,7 +153,7 @@ class gen_device:
 
         warp_M_tile = 32
 
-        # Determine maxmimum N_tile
+        # Determine maximum N_tile
         Max_Ntile = 0
         for layer in self.fuse_gemm_info:
             n_tile = layer['mnk'][1]

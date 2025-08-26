@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,15 +40,15 @@ import textwrap
 
 from cutlass_library import DataType
 
-import cutlass
-from cutlass.backend.evt.frontend.frontend_base import EVTFrontendBase
-from cutlass.backend.epilogue import relu
-from cutlass.backend.library import FunctionalOp
+import cutlass_cppgen
+from cutlass_cppgen.backend.evt.frontend.frontend_base import EVTFrontendBase
+from cutlass_cppgen.backend.epilogue import identity, relu, tanh, sigmoid, silu, hardswish, gelu
+from cutlass_cppgen.backend.library import FunctionalOp
 
 
 class PythonASTFrontend(EVTFrontendBase, ast.NodeVisitor):
-    def __init__(self, element_compute=DataType.f32, **kwargs):
-        super().__init__(element_compute, **kwargs)
+    def __init__(self, cc, element_compute=DataType.f32, **kwargs):
+        super().__init__(cc, element_compute, **kwargs)
         # Flags
         # If this state is True, visit_Constant returns values without creating imm node
         self.no_imm = False
@@ -72,10 +72,17 @@ class PythonASTFrontend(EVTFrontendBase, ast.NodeVisitor):
             ast.Div: FunctionalOp.Divides,
             "maximum": FunctionalOp.Maximum,
             "minimum": FunctionalOp.Minimum,
+            "identity": identity.binding_type,
             "relu": relu.binding_type,
+            "tanh": tanh.binding_type,
+            "sigmoid": sigmoid.binding_type,
+            "silu": silu.binding_type,
+            "hardswish": hardswish.binding_type,
+            "gelu": gelu.binding_type,
             "multiply_add": FunctionalOp.MultiplyAdd,
             "sum": (FunctionalOp.Plus, FunctionalOp.AtomicAdd),
-            "max": (FunctionalOp.Maximum, FunctionalOp.AtomicMaximum)
+            "max": (FunctionalOp.Maximum, FunctionalOp.AtomicMaximum),
+            "exp": FunctionalOp.Exp
         }
         return mapping[op]
 

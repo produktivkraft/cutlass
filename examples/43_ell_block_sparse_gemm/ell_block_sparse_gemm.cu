@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@
     Description of parameters and tensors used to represent the Blocked-Ellpack (ELL) format
     for this example:
       a_rows              - Rows in the sparse matrix.
-      a_cols              - Colums in the sparse matrix.
+      a_cols              - Columns in the sparse matrix.
       a_ell_blocksize     - Size of the ELL-Blocks.
       a_ell_num_columns   - Number of columns in the Blocked-Ellpack format (ellValue columns)
       tensor_a            - ellValue matrix, whose size is (a_rows * a_ell_num_columns)

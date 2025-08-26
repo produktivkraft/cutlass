@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ Collection of builtin functions used for host reference in EVT
 
 import numpy as np
 
-from cutlass.utils.datatypes import is_cupy_tensor, is_numpy_tensor, is_torch_available, is_torch_tensor
+from cutlass_cppgen.utils.datatypes import is_cupy_tensor, is_numpy_tensor, is_torch_available, is_torch_tensor
 
 if is_torch_available():
     import torch
@@ -59,17 +59,26 @@ def max(x, dim):
     elif is_torch_tensor(x):
         return torch.amax(x, dim)
 
+
 def maximum(x, y):
     if is_numpy_tensor(x):
         return np.maximum(x, y)
     elif is_torch_tensor(x):
         return torch.maximum(x, torch.tensor(y))
-    
+
+
 def minimum(x, y):
     if is_numpy_tensor(x):
         return np.minimum(x, y)
     elif is_torch_tensor(x):
         return torch.minimum(x, torch.tensor(y))
+
+def exp(x):
+    if is_numpy_tensor(x):
+        return np.exp(x)
+    elif is_torch_tensor(x):
+        return torch.exp(x)
+
 
 ##############################################################################
 # Layout manipulate nodes

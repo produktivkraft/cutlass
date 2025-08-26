@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  **************************************************************************************************/
 
 // This example fuses gather before GEMM and scatter after GEMM into the same
-// GEMM kernel.  Gather and scatter operation is controled by an index vector
+// GEMM kernel.  Gather and scatter operation is controlled by an index vector
 // to select rows or columns from A, B, C or D matrices.
 //
 // Suppose, all matrices are column major.  The pseudo code of the fused kernel
@@ -59,11 +59,11 @@
 // Also, we don't check the index value is legal and index array point is valid
 // for the sake of the performance.
  
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <math.h>
-#include <assert.h>
+#include <cstdlib>
+#include <cstdio>
+#include <ctime>
+#include <cmath>
+#include <cassert>
 #include <cuda_runtime.h>
 
 #include <algorithm>

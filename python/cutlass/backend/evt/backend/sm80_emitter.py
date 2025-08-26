@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@
 Emitter for Sm80 Epilogue Visitor
 """
 
-from cutlass.backend.evt.backend.emitter_base import FusionCallbacks
-from cutlass.backend import GemmOperationUniversal
+from cutlass_cppgen.backend.evt.backend.emitter_base import FusionCallbacks
+from cutlass_cppgen.backend import GemmOperationUniversal
 
 
 class Sm80Emitter:

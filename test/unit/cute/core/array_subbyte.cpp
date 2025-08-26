@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -144,6 +144,19 @@ TEST(CuTe_core, Subbyte_iterator)
     EXPECT_EQ(uint8_t(tensor(i)), 13);
     tensor(i) = uint8_t(i);
     EXPECT_EQ(a[i], uint8_t(tensor(i)));
+  }
+
+  }
+
+  {
+  array_subbyte<uint6b_t, 15> a{};
+  auto tensor = make_tensor(a.begin(), make_shape(15));
+
+  fill(a, uint6b_t(13));
+  for (int i = 0; i < int(a.size()); ++i) {
+    EXPECT_EQ(uint6b_t(tensor(i)), uint6b_t(13));
+    tensor(i) = uint6b_t(i);
+    EXPECT_EQ(uint6b_t(a[i]), uint6b_t(tensor(i)));
   }
 
   }

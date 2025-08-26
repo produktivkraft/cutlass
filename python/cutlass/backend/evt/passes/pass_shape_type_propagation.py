@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,9 @@
 Shape and type propagation pass
 """
 
-from cutlass.backend.evt.ir.node import NodeBase
-from cutlass.backend.evt.passes.pass_manager import EVTPassBase
-from cutlass.backend.evt.passes.pass_preprocess_red import PassPreprocessRed
+from cutlass_cppgen.backend.evt.ir.node import NodeBase
+from cutlass_cppgen.backend.evt.passes.pass_manager import EVTPassBase
+from cutlass_cppgen.backend.evt.passes.pass_preprocess_red import PassPreprocessRed
 
 
 class PassShapeTypePropagation(EVTPassBase):

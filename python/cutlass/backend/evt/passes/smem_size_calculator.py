@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,9 @@ Compute the shared memory size in bytes
 import cutlass_library
 from pycute import shape_div, product
 
-import cutlass
-from cutlass.backend.evt.ir import TopoVisitorNode, DAGIR
-from cutlass.backend.library import DataTypeSize
+import cutlass_cppgen
+from cutlass_cppgen.backend.evt.ir import TopoVisitorNode, DAGIR
+from cutlass_cppgen.backend.library import DataTypeSize
 
 
 class GetSmemSize:

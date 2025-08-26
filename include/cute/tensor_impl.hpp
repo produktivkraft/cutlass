@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,8 @@ struct ArrayEngine
 };
 
 // Specialization for sparse_elem<S,T> tensor allocation/iteration
+// NOTE: This can and should be used for allocation of SMEM as well!
+//       Fuse these two ArrayEngines?
 template <int S, class T, size_t N>
 struct ArrayEngine<sparse_elem<S,T>, N>
 {
@@ -233,7 +235,7 @@ struct Tensor
   decltype(auto)
   operator()(Coord const& coord) {
     if constexpr (has_underscore<Coord>::value) {
-      auto const& [sliced_layout,offset] = slice_and_offset(coord, layout());
+      auto [sliced_layout,offset] = slice_and_offset(coord, layout());
       return make_tensor(data() + offset, sliced_layout);
     } else {
       return data()[layout()(coord)];
@@ -247,7 +249,7 @@ struct Tensor
   decltype(auto)
   operator()(Coord const& coord) const {
     if constexpr (has_underscore<Coord>::value) {
-      auto const& [sliced_layout,offset] = slice_and_offset(coord, layout());
+      auto [sliced_layout,offset] = slice_and_offset(coord, layout());
       return make_tensor(data() + offset, sliced_layout);
     } else {
       return data()[layout()(coord)];
@@ -379,6 +381,8 @@ struct MakeTensor
         return Tensor<Engine,Layout>();
       }
     }
+
+    CUTE_GCC_UNREACHABLE;
   }
 };
 
@@ -470,16 +474,16 @@ make_fragment_like(Tensor<Engine,Layout> const& tensor)
 }
 
 //
-// make_counting_tensor
+// make_coord_tensor
 //   Make a tensor from a layout by binding it to a counting iter with 0-offset of the same profile as the codomain.
 //
 
 template <class Layout, __CUTE_REQUIRES(is_layout<Layout>::value)>
 CUTE_HOST_DEVICE constexpr
 auto
-make_counting_tensor(Layout const& layout)
+make_coord_tensor(Layout const& layout)
 {
-  return make_tensor(make_inttuple_iter(repeat_like(coshape(layout), Int<0>{})), layout);
+  return make_tensor(make_inttuple_iter(coprofile(layout)), layout);
 }
 
 //
@@ -492,7 +496,7 @@ CUTE_HOST_DEVICE constexpr
 auto
 make_identity_tensor(Shape const& shape)
 {
-  return make_counting_tensor(make_identity_layout(shape));
+  return make_coord_tensor(make_identity_layout(shape));
 }
 
 //
@@ -749,24 +753,30 @@ domain_offset(Coord const& coord, Tensor&& tensor)
 //   -- doesn't check dynamic integer divisibility
 //   -- doesn't check alignment
 
-template <class NewType, class Tensor>
+template <class NewType_, class Tensor>
 CUTE_HOST_DEVICE constexpr
 auto
 recast(Tensor&& tensor)
 {
-  using OldType = typename remove_cvref_t<Tensor>::value_type;
-  auto old_layout = tensor.layout();
-  auto new_layout = recast_layout<OldType,NewType>(old_layout);
+  using OldType = typename remove_cvref_t<Tensor>::element_type;
+  using NewType = copy_cv_t<OldType, NewType_>;
 
-  // If this is an upcast of a normal Layout with static negative strides, then offset as well
-  if constexpr (sizeof(OldType) < sizeof(NewType) && not is_composed_layout<decltype(old_layout)>::value) {
-    auto shape_diff = transform(flatten(old_layout.shape()), flatten(new_layout.shape()), minus{});
-    auto extent_diff = transform(shape_diff, flatten(old_layout.stride()), multiplies{});
-    auto offset = fold(extent_diff, Int<0>{}, [](auto const& i, auto const& a) { return i + cute::min(a,Int<0>{}); });
-
-    return make_tensor(recast_ptr<NewType>(static_cast<Tensor&&>(tensor).data() + offset), new_layout);
+  if constexpr (is_same<NewType, OldType>::value) {
+    return make_tensor(static_cast<Tensor&&>(tensor).data(), tensor.layout());
   } else {
-    return make_tensor(recast_ptr<NewType>(static_cast<Tensor&&>(tensor).data()         ), new_layout);
+    auto old_layout = tensor.layout();
+    auto new_layout = recast_layout<OldType,NewType>(old_layout);
+
+    // If this is an upcast of a normal Layout with static negative strides, then offset as well
+    if constexpr (sizeof(OldType) < sizeof(NewType) && not is_composed_layout<decltype(old_layout)>::value) {
+      auto shape_diff = transform(flatten(old_layout.shape()), flatten(new_layout.shape()), minus{});
+      auto extent_diff = transform(shape_diff, flatten(old_layout.stride()), multiplies{});
+      auto offset = fold(extent_diff, Int<0>{}, [](auto const& i, auto const& a) { return i + cute::min(a,Int<0>{}); });
+
+      return make_tensor(recast_ptr<NewType>(static_cast<Tensor&&>(tensor).data() + offset), new_layout);
+    } else {
+      return make_tensor(recast_ptr<NewType>(static_cast<Tensor&&>(tensor).data()         ), new_layout);
+    }
   }
 
   CUTE_GCC_UNREACHABLE;
@@ -786,7 +796,7 @@ recast(Tensor&& tensor)
  * vectorization should be attempted.
  *
  * Note that the return value does NOT include alignment concerns such as the pointer value and
- * the divisbility of dynamic strides.
+ * the divisibility of dynamic strides.
  */
 template <class SrcEngine, class SrcLayout,
           class DstEngine, class DstLayout>
@@ -826,7 +836,7 @@ max_common_vector(Tensor<SrcEngine,SrcLayout> const& a,
  *          are both identity Layouts.
  *
  * Note that the returned layout does NOT include alignment concerns such as the pointer value and
- * the divisbility of dynamic strides.
+ * the divisibility of dynamic strides.
  */
 template <class SrcEngine, class SrcLayout,
           class DstEngine, class DstLayout>
@@ -856,6 +866,17 @@ max_common_layout(Tensor<SrcEngine,SrcLayout> const& a,
   }
 
   CUTE_GCC_UNREACHABLE;
+}
+
+/* Return the maximum (statically known) alignment of a Tensor in the number of bits
+ */
+template <class Engine, class Layout>
+CUTE_HOST_DEVICE constexpr
+auto
+max_alignment(Tensor<Engine,Layout> const& t)
+{
+  return gcd(max_alignment(t.data()),
+             max_alignment(t.layout()) * static_value<sizeof_bits<typename Engine::value_type>>());
 }
 
 //
@@ -1031,8 +1052,8 @@ local_tile(Tensor    && tensor,
 //   auto cta_tiler = Shape<_32, _64, _4>{};
 //   auto cta_coord = make_coord(blockIdx.x, blockIdx.y, _);
 //   Tensor ctaA = local_tile(dataA, cta_tiler, cta_coord, Step<_1, X,_1>{});  // (_32,_4,k)
-//   Tensor ctaB = local_tile(dataA, cta_tiler, cta_coord, Step< X,_1,_1>{});  // (_64,_4,k)
-//   Tensor ctaC = local_tile(dataA, cta_tiler, cta_coord, Step<_1,_1, X>{});  // (_32,_64)
+//   Tensor ctaB = local_tile(dataB, cta_tiler, cta_coord, Step< X,_1,_1>{});  // (_64,_4,k)
+//   Tensor ctaC = local_tile(dataC, cta_tiler, cta_coord, Step<_1,_1, X>{});  // (_32,_64)
 template <class Tensor, class Tiler, class Coord, class Proj,
           __CUTE_REQUIRES(is_tensor<remove_cvref_t<Tensor>>::value)>
 CUTE_HOST_DEVICE
@@ -1098,96 +1119,6 @@ CUTE_HOST_DEVICE void print(Tensor<Engine,Layout> const& tensor)
 {
   print(tensor.data()); print(" o "); print(tensor.layout());
 }
-
-template <class Engine, class Layout>
-CUTE_HOST_DEVICE void print_tensor(Tensor<Engine,Layout> const& tensor, bool print_type = true)
-{
-  if (print_type) {
-    print(tensor); print(":\n");
-  }
-
-  if constexpr (Layout::rank == 1)
-  {
-    for (int m = 0; m < size(tensor); ++m) {
-      pretty_print(tensor(m));
-      printf("\n");
-    }
-  } else
-  if constexpr (Layout::rank == 2)
-  {
-    for (int m = 0; m < size<0>(tensor); ++m) {
-      for (int n = 0; n < size<1>(tensor); ++n) {
-        pretty_print(tensor(m,n));
-      }
-      printf("\n");
-    }
-  } else
-  if constexpr (Layout::rank == 3)
-  {
-    print_tensor(tensor(_,_,0), false);
-    for (int k = 1; k < size<2>(tensor); ++k) {
-      for (int i = 0; i < 5*size<1>(tensor); ++i) { print("-"); } print("\n");
-      print_tensor(tensor(_,_,k), false);
-    }
-  } else
-  if constexpr (Layout::rank == 4)
-  {
-    print_tensor(tensor(_,_,_,0), false);
-    for (int p = 1; p < size<3>(tensor); ++p) {
-      for (int i = 0; i < 5*size<1>(tensor); ++i) { print("="); } print("\n");
-      print_tensor(tensor(_,_,_,p), false);
-    }
-  }
-}
-
-#if !defined(__CUDACC_RTC__)
-template <class Engine, class Layout>
-CUTE_HOST std::ostream& print_tensor_os(std::ostream& os, Tensor<Engine,Layout> const& tensor)
-{
-  int digits = 9;
-
-  if constexpr (Layout::rank == 1)
-  {
-    for (int m = 0; m < size(tensor); ++m) {
-      os << std::setw(digits) << tensor(m) << std::endl;
-    }
-  } else
-  if constexpr (Layout::rank == 2)
-  {
-    for (int m = 0; m < size<0>(tensor); ++m) {
-      for (int n = 0; n < size<1>(tensor); ++n) {
-        os << std::setw(digits) << tensor(m,n);
-      }
-      os << std::endl;
-    }
-  } else
-  if constexpr (Layout::rank == 3)
-  {
-    print_tensor_os(os, tensor(_,_,0));
-    for (int k = 1; k < size<2>(tensor); ++k) {
-      for (int i = 0; i < digits*size<1>(tensor); ++i) { os << "-"; } os << std::endl;
-      print_tensor_os(os, tensor(_,_,k));
-    }
-  } else
-  if constexpr (Layout::rank == 4)
-  {
-    print_tensor_os(os, tensor(_,_,_,0));
-    for (int p = 1; p < size<3>(tensor); ++p) {
-      for (int i = 0; i < digits*size<1>(tensor); ++i) { os << "="; } os << std::endl;
-      print_tensor_os(os, tensor(_,_,_,p));
-    }
-  }
-
-  return os;
-}
-
-template <class Engine, class Layout>
-CUTE_HOST std::ostream& operator<<(std::ostream& os, Tensor<Engine,Layout> const& tensor)
-{
-  os << tensor.layout() << std::endl;
-  return print_tensor_os(os, tensor);
-}
-#endif // !defined(__CUDACC_RTC__)
 
 } // end namespace cute
 

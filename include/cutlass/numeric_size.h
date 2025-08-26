@@ -1,5 +1,5 @@
 /***************************************************************************************************
- * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,13 @@ struct sizeof_bits {
 };
 
 template <typename T>
-struct sizeof_bits<T const>: sizeof_bits<T> {};
+struct sizeof_bits<T const> : sizeof_bits<T> {};
+
+template <typename T>
+struct sizeof_bits<T volatile> : sizeof_bits<T> {};
+
+template <typename T>
+struct sizeof_bits<T const volatile> : sizeof_bits<T> {};
 
 template <>
 struct sizeof_bits<void> {
@@ -66,6 +72,15 @@ constexpr
 R
 bits_to_bytes(T bits) {
   return (R(bits) + R(7)) / R(8);
+}
+
+/// Returns the number of bits required to hold a specified number of bytes
+template <class R = int, class T>
+CUTLASS_HOST_DEVICE
+constexpr
+R
+bytes_to_bits(T bytes) {
+  return R(bytes) * R(8);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

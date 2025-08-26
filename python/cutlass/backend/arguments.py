@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,16 @@
 from math import prod
 from typing import Union
 
-from cuda import cuda, cudart
+from cutlass_cppgen.utils.lazy_import import lazy_import
+
+cuda = lazy_import("cuda.cuda")
+cudart = lazy_import("cuda.cudart")
 import numpy as np
 
-import cutlass
-from cutlass.backend.frontend import CupyFrontend, NumpyFrontend, TorchFrontend
-from cutlass.backend.memory_manager import DevicePtrWrapper
-from cutlass.utils.datatypes import is_cupy_tensor, is_numpy_tensor, is_torch_tensor
+import cutlass_cppgen
+from cutlass_cppgen.backend.frontend import CupyFrontend, NumpyFrontend, TorchFrontend
+from cutlass_cppgen.backend.memory_manager import DevicePtrWrapper
+from cutlass_cppgen.utils.datatypes import is_cupy_tensor, is_numpy_tensor, is_torch_tensor
 
 
 class ArgumentBase:
@@ -119,7 +122,7 @@ class ArgumentBase:
         Frees allocated device-side memory
         """
         # Free any device memory allocated manually
-        if not cutlass.use_rmm:
+        if not cutlass_cppgen.use_rmm:
             for name, buf in self.buffers.items():
                 if isinstance(buf, DevicePtrWrapper):
                     err, = cudart.cudaFree(buf.ptr)

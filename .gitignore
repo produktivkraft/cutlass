@@ -1,9 +1,9 @@
+.vscode/
+.cache/
+CMakeUserPresets.json
+
 # PyCache files
 __pycache__/
 cutlass_library.egg-info/
 
-build/
-build_*/
-.vscode/
-.cache/
-CMakeUserPresets.json
+/build*

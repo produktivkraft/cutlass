@@ -1,6 +1,6 @@
 #################################################################################################
 #
-# Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,8 @@ from typing import Any
 
 import networkx as nx
 
-from cutlass.backend.evt.ir import DAGIR
-from cutlass.backend.evt.passes.util import cc_map
+from cutlass_cppgen.backend.evt.ir import DAGIR
+from cutlass_cppgen.backend.evt.passes.util import cc_map
 
 
 class EVTPassBase:
