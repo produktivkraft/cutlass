@@ -20,18 +20,6 @@
         "CUTLASS_ENABLE_EXAMPLES": true,
         "CUTLASS_NVCC_ARCHS": "90"
       }
-    },
-    {
-      "name": "osx_clang",
-      "description": "not work",
-      "binaryDir": "${sourceDir}/build_clang",
-      "inherits": "min",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_LINKER_TYPE": "LLD",
-        "CUDA_COMPILER": "clang"
-      }
     }
   ]
 }
