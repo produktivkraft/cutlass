@@ -1,0 +1,7 @@
+/nvidia_cutlass_dsl/
+
+cutlass/_mlir
+cutlass/base_dsl
+cutlass/cutlass_dsl
+lib
+*.so
