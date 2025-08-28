@@ -144,7 +144,11 @@ class Compiler:
         try:
             pm = self.passmanager.PassManager.parse(pipeline)
             pm.enable_verifier(enable_verifier)
-            pm.enable_ir_printing(print_before_all=True, print_after_all=True)
+            pm.enable_ir_printing(
+                print_before_all=False,
+                print_after_all=True,
+                tree_printing_dir_path=".",
+            )
             pm.run(module.operation)
         except Exception as e:
             error_msg = str(e)
