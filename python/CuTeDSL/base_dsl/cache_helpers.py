@@ -147,7 +147,8 @@ def dump_cache_to_path(
         for idx, [key, value] in enumerate(jit_cache.items()):
             if idx >= int(cache_limit):
                 break
-            save_ir(dsl_name, value.ir_module, key, asBytecode=True)
+            # save_ir(dsl_name, value.ir_module, key, asBytecode=True)
+            save_ir(dsl_name, value.ir_module, key, asBytecode=False)
     except Exception as e:
         print(f"{dsl_name} failed with caching generated IR", e)
     finally:
