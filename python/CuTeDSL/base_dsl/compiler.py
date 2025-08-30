@@ -257,7 +257,7 @@ def compile(func, *args, **kwargs):
         raise DSLRuntimeError("Object is not callable.")
 
     kwargs["compile_only"] = True
-    kwargs["no_cache"] = True
+    # kwargs["no_cache"] = True
 
     if inspect.isfunction(func):
         # regular function
