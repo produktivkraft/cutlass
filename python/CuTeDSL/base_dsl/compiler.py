@@ -22,6 +22,7 @@ import inspect
 import argparse
 from .common import DSLRuntimeError
 from .utils.logger import log
+from .env_manager import get_bool_env_var
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(_SCRIPT_PATH)
@@ -144,11 +145,12 @@ class Compiler:
         try:
             pm = self.passmanager.PassManager.parse(pipeline)
             pm.enable_verifier(enable_verifier)
-            pm.enable_ir_printing(
-                print_before_all=False,
-                print_after_all=True,
-                tree_printing_dir_path=".",
-            )
+            if get_bool_env_var("CUTE_COMPILE_IR_PRINTING", False):
+                pm.enable_ir_printing(
+                    print_before_all=False,
+                    print_after_all=True,
+                    tree_printing_dir_path=".",
+                )
             pm.run(module.operation)
         except Exception as e:
             error_msg = str(e)
@@ -256,8 +258,8 @@ def compile(func, *args, **kwargs):
     if not callable(func):
         raise DSLRuntimeError("Object is not callable.")
 
-    kwargs["compile_only"] = True
-    # kwargs["no_cache"] = True
+    kwargs["compile_only"] = get_bool_env_var("CUTE_COMPILE_COMPILE_ONLY", True)
+    kwargs["no_cache"] = get_bool_env_var("CUTE_COMPILE_NO_CACHE", True)
 
     if inspect.isfunction(func):
         # regular function

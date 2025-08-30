@@ -263,7 +263,6 @@ class JitExecutor:
             module = self.ir_module
             cuda_kernel_cache = dict()
             cuda_driver_version = cuda_helpers.get_driver_version()
-            # cuda_driver_version = 13000
             for sym in kernel_symbols:
                 if sym not in cuda_kernel_cache:
                     log().debug(f"Loading CUDA module for symbol: {sym}")

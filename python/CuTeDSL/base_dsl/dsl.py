@@ -37,7 +37,7 @@ from types import FunctionType
 import warnings
 
 from . import typing as t
-from .env_manager import EnvironmentVarManager
+from .env_manager import EnvironmentVarManager, get_bool_env_var
 from .compiler import CompileOptions
 
 # =============================================================================
@@ -1376,7 +1376,7 @@ class BaseDSL:
         compile_only = kwargs.pop("compile_only", False)
 
         if not no_cache and compile_only:
-            no_cache = True
+            no_cache = get_bool_env_var("CUTE_COMPILE_NO_CACHE", True)
             self.print_warning("Cache is disabled as user wants to compile only.")
 
         # Check the number of arguments
